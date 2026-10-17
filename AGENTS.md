@@ -3,7 +3,9 @@
 > **对外名称统一用 `free-llm-router`**：多供应商账号池 → 一个 OpenAI 兼容入口。
 >
 > ⚠️ 历史名称：`workbuddy-serverless` → `hivegate` → **`free-llm-router`**。
-> **仓库名、Worker 名、`package.json` 名现在三者一致**，不再有历史遗留。
+> **仓库名、Worker 名、`package.json` 名、本地目录名现在四者一致**，不再有历史遗留。
+> ⚠️ 本地目录也已从 `workbuddy-serverless` 改名为 `free-llm-router`（2026-10-11）——
+> 改名只动目录，**仓库内没有任何硬编码绝对路径**，故 clone 到任何目录名都能跑。
 >（Worker 名在网页端改过，`wrangler.jsonc` 已同步 —— 见该文件开头的说明。）
 
 ## 语言约束
