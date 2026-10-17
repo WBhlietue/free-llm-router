@@ -47,18 +47,9 @@ body {
   margin: 0; background: var(--bg); color: var(--text);
   font: 14px/1.55 ui-sans-serif, system-ui, -apple-system, "Segoe UI", "Noto Sans SC", sans-serif;
 }
-/*
- * 顶栏 = **一条圆角容器**（用户给的参考图形态）。
- *
- * ⚠️ 原先 header 与 nav 是**两条**通栏（各有 border-bottom + 背景），
- * 顶部于是有两道横线、两段底色，看着散。
- * ⇒ 现在把两者包进同一个圆角面板：`main` 之外只有一条视觉元素。
- *
- * ⚠️ 用 `:has()` 让 header 在有 nav 时贴合成一条（无 nav 时不撑高度）。
- */
 header {
-  display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between;
-  padding: 8px 12px 0; background: transparent; border-bottom: 0;
+  display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between;
+  padding: 12px 20px; border-bottom: 1px solid var(--line); background: var(--panel);
 }
 .brand { display: flex; gap: 12px; align-items: center; }
 /* ⚠️ `h1` 已不在页面上（站名移到导航条内），但保留规则以防后续复用 */
@@ -78,33 +69,9 @@ h3 { font-size: 13px; margin: 0; color: var(--dim); font-weight: 500; }
 /* 直接坐在视图里的 h3（不在 .panel-head 内）仍需要上下间距 */
 section.view > h3 { margin: 16px 0 8px; }
 
-/*
- * 导航条：**圆角 + 底色 + 内边距**，站标在最左、导航项紧随其后。
- * 照参考图：整条是一个悬浮面板，而不是通栏。
- */
 nav {
-  display: flex; flex-wrap: wrap; gap: 4px; align-items: center;
-  padding: 8px 10px; margin: 10px 20px 0;
-  border: 1px solid var(--line); border-radius: 14px; background: var(--panel);
-  box-shadow: 0 1px 2px rgba(0,0,0,.03);
-}
-/*
- * 站标（图标 + 站名）。
- * ⚠️ 与导航项之间要有**明显分隔**（`margin-right`），否则会读成「第一个导航项」。
- * ⚠️ 窄屏隐藏站名只留图标 —— 否则导航项会被挤到第二行。
- */
-.nav-brand {
-  display: inline-flex; align-items: center; gap: 8px;
-  padding: 0 12px 0 6px; margin-right: 6px;
-  border-right: 1px solid var(--line);
-  color: var(--text); font-size: 15px; font-weight: 600; letter-spacing: .2px;
-  white-space: nowrap;
-}
-.nav-brand svg { color: var(--accent-text); flex: none; }
-@media (max-width: 720px) {
-  .nav-brand { padding-right: 8px; margin-right: 2px; }
-  .nav-brand-name { display: none; }
-  nav { margin: 10px 12px 0; }
+  display: flex; flex-wrap: wrap; gap: 4px; padding: 8px 16px;
+  border-bottom: 1px solid var(--line); background: var(--panel);
 }
 .nav-item {
   background: transparent; border: 1px solid transparent; color: var(--dim);

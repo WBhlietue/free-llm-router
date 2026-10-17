@@ -2056,8 +2056,10 @@ test('⚠️ 计费倍率徽章不得把「未标注」说成「不可用」（�
   const body = fn.slice(0, fn.indexOf('\n}'))
   assert.ok(!/textContent = '不可用'/.test(body),
     '⚠️ 不得显示「不可用」（实测这些模型可调通）')
-  assert.ok(/textContent = '未标注'/.test(body),
-    '⚠️ 应如实说「未标注」')
+  // ⚠️ 也不能满屏「未标注」—— 一列里 39/46 都是同一个词，看着像坏了。
+  // 未知时**留空**更有信息量（空白＝这列对该批模型没意义）。
+  assert.ok(!/textContent = '未标注'/.test(body),
+    '⚠️ 未知倍率应留空，不要重复播报「未标注」')
   // 三态语义必须都在：免费 / 倍率 / 未标注
   assert.ok(/textContent = '免费'/.test(body), '免费态')
   assert.ok(/'x' \+ factor/.test(body), '倍率态')

@@ -131,9 +131,15 @@ function buildTable(cols, rows, numericFrom) {
       //   1. `{ node }` —— **富单元格**：直接插一个 DOM 节点（用于徽章等）；
       //   2. `[显示文本, 悬浮全文]` 两元组 —— 截断但保留全文；
       //   3. 普通值 —— 当文本。
-      const rich = cell !== null && typeof cell === 'object'
+      // ⚠️ `null` / `undefined` ⇒ **空单元格**（不渲染 "null" 字样）。
+      // 用途：「该字段不存在」时留白，比播报「未标注」干净得多
+      //（一列里 39/46 都是同一个词，看着像坏了）。
+      const empty = cell === null || cell === undefined
+      const rich = !empty && typeof cell === 'object'
         && !Array.isArray(cell) && 'node' in cell
-      if (rich) {
+      if (empty) {
+        // 什么都不写 ⇒ 空单元格（见上方说明）
+      } else if (rich) {
         td.appendChild(cell.node)
         if (cell.title !== undefined) td.title = String(cell.title)
       } else {
@@ -1279,18 +1285,15 @@ function priceBadge(factor) {
   const free = factor === 0
   const unknown = !Number.isFinite(factor) && factor !== 0
   if (unknown) {
-    // ⚠️⚠️ **不能说「不可用」** —— 实测这些模型**能正常调通**
-    //（发一条真实请求，模型正常返回）。它们只是**上游没在名字里标倍率**。
+    // ⚠️⚠️ **不能说「不可用」** —— 实测这些模型**能正常调通**，
+    // 它们只是该家没下发倍率字段（如 opencode 这类）。
     //
-    // ⚠️ 参考 fork 在这里显示「不可用」，但那是**不准确的**：
-    // 用户看到会以为不能调，从而放弃一个本来可用的模型。
-    // 本项目纪律是「如实」，故这里说的是**事实**：未标注。
-    span.className = 'tag'
-    span.textContent = '未标注'
-    // ⚠️ 这是**用户可见文案**，不能用 Markdown 星号加粗（网页不渲染它，
-    // 用户会看到字面的 `**`）—— 项目有单测专门守这条。
-    span.title = '上游未在模型名里标注计费倍率。该模型仍可正常调用，只是倍率未知'
-      + '（参考 fork 把这种显示为「不可用」，实测不准确）'
+    // ⚠️ 更不该**满屏都写「未标注」** —— 那看着像坏了。
+    // 一列里绝大多数都是同一个「未知」时，**留空**比重复 39 次更有信息量：
+    // 空白一眼就知道「这列对我这批模型没意义」。
+    // ⚠️ 返回 `null` 而不是空标签：空标签仍会占一格宽度，
+    // 整列看着就是一片小方框。`null` 让表格**什么都不渲染**。
+    return null
   } else if (free) {
     span.className = 'tag ok'
     span.textContent = '免费'
@@ -1355,7 +1358,9 @@ async function loadModels() {
   note.textContent = `共 ${data.length} 个模型`
   // ⚠️ 如实说明「倍率」的来源，免得用户以为它是上游的权威报价：
   // 它是从模型**名字的后缀**（`· x0.05`）解析出来的，没标就是「不可用」。
-  note.textContent += '。计费倍率取自模型名后缀（如 `· x0.05`）；标「不可用」表示该模型未标注倍率（通常已被停用）'
+  // ⚠️ 说明必须**与实际数据源一致**：倍率现在取自**上游下发的 `credits` 字段**，
+  // 不再是从名字里抠 —— 旧文案写的「取自模型名后缀」「标不可用」都已过时。
+  note.textContent += '。计费倍率来自上游下发的字段；留空的表示该供应商未提供倍率'
   box.appendChild(note)
 }
 

@@ -3373,8 +3373,10 @@ async function handleInner(request: Request, env: Env, ctx: ExecutionContext): P
           data.push({
             ...base,
             id: `${providerId}/${m.id}`,
-            // ⚠️ 用 `m.name || m.id`：有的家不给显示名，回落到 id 免得空白
-            priceFactor: priceFactorFromName(m.name || m.id),
+            // ⚠️ **优先用 provider 解析出的真实倍率**（buddy 的 `credits` 字段）。
+            // 只有该家没提供时才退回「从模型名抠」—— 名字里通常不写倍率，
+            // 抠出来 39/46 都是空（我第一版就是这么错的）。
+            priceFactor: m.priceFactor ?? priceFactorFromName(m.name || m.id),
             providerName: provider.name,
             // ⚠️ 用 `picked.realm`（该账号**实际所在**的分片），
             // 不按 providerId 猜 —— realm 是记在凭据的 `extras.realm` 上的，
