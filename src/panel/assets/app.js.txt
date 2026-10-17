@@ -1340,18 +1340,35 @@ async function loadModels() {
   //（实测反馈：整列空白看起来像渲染失败）。
   const rows = data.map((m) => {
     // realm 是 `'*'` 表示聚合（跨分片汇总）
-    const realmLabel = m.realm === 'global' ? '国际' : m.realm === '*' ? '全部' : '国内'
     return [
       m.id,
       m.name || m.id,
       m.providerName || (m.owned_by === 'aggregate' ? '聚合（跨渠道）' : '—'),
-      realmLabel,
-      priceBadge(m.priceFactor === undefined ? Number.POSITIVE_INFINITY : m.priceFactor),
-      m.isFree === true ? '免费额度' : '按量计费',
+      // ⚠️ **`isFree` 优先于 `priceFactor`**（用户要求「免费用绿色显示免费」）。
+      //
+      // ## 🔴 这是我上一版「好多不显示」的真正原因
+      //
+      // `cline` 有 **21 个 `cline-free/*` 模型**，其 `isFree` 已被 provider
+      // 正确算出（`recommended-models` 是免费集合的权威来源），但这家
+      // **不下发 `credits`** ⇒ `priceFactor` 是 undefined ⇒ 倍率列**一片空白**。
+      // 而「免费」这个事实**本来就有**，只是被塞在另一列的文字里。
+      //
+      // ⚠️ 故这里让 `isFree` **压过** `priceFactor`：免费就是免费，
+      // 不管上游有没有给倍率。
+      // ⚠️ **聚合条目不给倍率**（用户要求）—— 它的倍率是「各候选里最便宜的那个」，
+      // 那是个**推导值**而非上游事实；显示它会让用户以为聚合自己有报价。
+      // 聚合的价值是「自动挑渠道」，倍率对它没有决策意义。
+      m.owned_by === 'aggregate' || String(m.id).startsWith('aggregate/')
+        ? null
+        : priceBadge(m.isFree === true
+          ? 0
+          : (m.priceFactor === undefined ? Number.POSITIVE_INFINITY : m.priceFactor)),
     ]
   })
   box.appendChild(wrapTable(buildTable(
-    ['模型 id', '名称', '所属提供商', '区域', '计费倍率', '类型'], rows,
+    // ⚠️ 「区域」列已去掉（用户要求）—— 它只区分国内/国际，
+    // 对日常选模型没有决策价值，却占一格宽度。
+    ['模型 id', '名称', '所属提供商', '计费倍率'], rows,
   )))
 
   const note = document.createElement('p'); note.className = 'hint'
