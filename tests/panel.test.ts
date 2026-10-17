@@ -187,6 +187,9 @@ test('⚠️ /v1/models 必须只列「有账号」的供应商的模型（登�
   // ⚠️ 单测是**打包后**在 `.build/tests/` 下跑的，故相对路径要指回源码根。
   // 用 process.cwd()（脚本从仓库根运行）最稳。
   const src = readFileSync('src/index.ts', 'utf8')
+  // ⚠️ 断言**不变式**（前缀存在），不钉死 `data.push` 的**字面排版** ——
+  // 往对象里补 `priceFactor` / `providerName` / `realm` 后，原先「整行字面匹配」
+  // 会假失败，而**它要守的约束根本没变**。
   // 简单起见：断言关键标识符存在（比跨行正则更稳）
   assert.ok(src.includes('byProvider'), '/v1/models 应按供应商分组账号')
   assert.ok(/for \(const \[providerId, list\] of byProvider\)/.test(src), '应逐个有账号的供应商拉目录')
@@ -408,7 +411,7 @@ test('⚠️ /v1/models 目录里不得出现裸名（一律带 provider/ 前缀
   // 裸名根本分不清是哪一家。
   const src = readFileSync('src/index.ts', 'utf8')
   assert.ok(
-    /data\.push\(\{ \.\.\.base, id: `\$\{providerId\}\/\$\{m\.id\}` \}\)/.test(src),
+    /id: `\$\{providerId\}\/\$\{m\.id\}`/.test(src),
     '目录项必须带 provider/ 前缀',
   )
   // 不能再有针对默认供应商的裸名分支
@@ -2042,4 +2045,30 @@ test('⚠️ 登录页：网络错误不得报成「密钥无效」（否则用�
     '⚠️ 不得把非 ok 一律判为密钥无效')
   // 自动登录只在**确认有效**时发生（网络抖动时不能删密钥/乱跳）
   assert.ok(/if \(verdict === 'ok'\)/.test(js), '⚠️ 自动进入必须只在确认有效时')
+})
+
+test('⚠️ 计费倍率徽章不得把「未标注」说成「不可用」（实测可调通）', () => {
+  // ⚠️ 参考 fork 把没有倍率标注的模型显示为「不可用」，但**实测不准确**：
+  // 那些模型（如 `buddy/hy4-preview-exp`）能**正常调通**，
+  // 只是上游没在名字里标倍率。显示「不可用」会让用户放弃一个可用的模型。
+  const js = stripJsComments(panelAsset('/panel/app.js')?.body ?? '')
+  const fn = js.slice(js.indexOf('function priceBadge'))
+  const body = fn.slice(0, fn.indexOf('\n}'))
+  assert.ok(!/textContent = '不可用'/.test(body),
+    '⚠️ 不得显示「不可用」（实测这些模型可调通）')
+  assert.ok(/textContent = '未标注'/.test(body),
+    '⚠️ 应如实说「未标注」')
+  // 三态语义必须都在：免费 / 倍率 / 未标注
+  assert.ok(/textContent = '免费'/.test(body), '免费态')
+  assert.ok(/'x' \+ factor/.test(body), '倍率态')
+})
+
+test('⚠️ 模型页必须自动加载 + 按钮语义改为「刷新目录」', () => {
+  // 用户要求：「模型页自动加载」「把加载改为刷新目录」。
+  const html = panelAsset('/panel/')?.body ?? ''
+  const js = stripJsComments(panelAsset('/panel/app.js')?.body ?? '')
+  assert.ok(html.includes('刷新目录'), '按钮文案应为「刷新目录」')
+  assert.ok(!/>加载</.test(html), '不应再有「加载」按钮文案')
+  assert.ok(/models: \(\) => loadModels\(\)/.test(js),
+    '⚠️ 模型视图应自动加载（loaders 里直接调 loadModels）')
 })

@@ -249,6 +249,53 @@ export function canonicalDisplayName(key: string): string {
  * ⚠️ **分隔符 `·` 是必需的**：不要求它的话，模型名里出现的数字
  *（如 `kimi-k2.5`）会被误读成倍率。
  */
+/**
+ * **裸模型名的别名表** → 聚合规范名。
+ *
+ * ## 为什么需要它（用户要求）
+ *
+ * 「把 DeepSeek-V4.1-Flash 路由到 buddy 改为路由到自动的 DeepSeek」。
+ *
+ * 裸名（无 `provider/` 前缀）现在一律回落到默认供应商 `buddy`。
+ * 实测后果：客户端写 `DeepSeek-V4.1-Flash`（**官方拼写、带大写与点**）时，
+ * 这个名字被**原样**送给 buddy，而 buddy 的真实 id 是小写
+ * `deepseek-v4.1-flash` ⇒ 上游回
+ * `model [DeepSeek-V4.1-Flash] service info not found`
+ * ⇒ 用户得到一个**看着像「模型不存在」的错误**，而其实是大小写/拼写没归一。
+ *
+ * ⇒ 这张表把「用户在别处见过的官方拼写」直接映射到**聚合规范名**，
+ * 于是同一个请求会被聚合路由接管：自动挑一个**积分最快作废**的渠道，
+ * 而不是死死绑在某一家。
+ *
+ * ## ⚠️ 两条纪律
+ *
+ * 1. **只映射「已知的官方拼写」**，不做模糊匹配 —— 拼错的名字必须**照旧报错**
+ *    （报错里会列出可用键），不能让用户以为「随便写写就能通」。
+ * 2. 键全部用小写存储、查表时把输入也转小写 ⇒
+ *    `DeepSeek-V4.1-Flash` / `deepseek-v4.1-flash` / `DEEPSEEK-V4.1-FLASH`
+ *    都能命中同一条。
+ */
+export const BARE_MODEL_ALIASES: ReadonlyMap<string, string> = new Map([
+  // 官方拼写（带大写与点）→ 聚合规范名
+  ['deepseek-v4.1-flash', 'deepseek-v4-1-flash'],
+  ['deepseek v4.1 flash', 'deepseek-v4-1-flash'],
+  ['glm-5.3-flash', 'glm-5-3-flash'],
+  ['glm 5.3 flash', 'glm-5-3-flash'],
+])
+
+/**
+ * 查裸名别名 → 聚合规范名。
+ *
+ * ⚠️ 大小写与空格都归一后再查（见 `BARE_MODEL_ALIASES` 的纪律 2）。
+ * 查不到返回 `undefined` —— 调用方据此走**原有**的回落逻辑，
+ * 不要因为「没命中」就改变行为。
+ */
+export function aggregateAliasForBareModel(raw: string): string | undefined {
+  if (typeof raw !== 'string') return undefined
+  const key = raw.trim().toLowerCase().replace(/\s+/g, ' ').replace(/\s*·.*$/, '')
+  return BARE_MODEL_ALIASES.get(key)
+}
+
 export function priceFactorFromName(name: string): number {
   if (typeof name !== 'string') return Number.POSITIVE_INFINITY
   if (name.includes('免费')) return 0
