@@ -3485,6 +3485,7 @@ async function handleInner(request: Request, env: Env, ctx: ExecutionContext): P
   // ── OpenAI 兼容：对话（**流式 SSE 透传**） ──
   if (path === '/v1/chat/completions' && request.method === 'POST') {
     const realm = url.searchParams.get('realm') ?? 'cn'
+    
     // ⚠️ 子密钥必须在**这里**鉴权：模型白名单要从请求体读 model，
     // 而请求体只能读一次（读两遍会报 Body already used）。
     const guard = await guardV1(request, env, v1Auth)
