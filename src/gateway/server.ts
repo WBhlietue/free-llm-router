@@ -451,7 +451,6 @@ export async function handleChatCompletions(
             "You are interacting with the user through the Web GUI at "
         );
 
-    console.log(rawBody.messages[0].content);
     // 会话粘性 key（空串 = 无法判定会话，此时不做粘性）。
     // ⚠️ 在这里算一次、两条路径共用 —— 不各算一份（会分叉）。
     const sessionKey = await deriveSessionKey(rawBody);
