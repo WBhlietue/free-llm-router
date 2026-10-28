@@ -217,6 +217,7 @@ export function toProviderModels(models: OpenAiModel[]): ProviderModel[] {
     // ⚠️ 用上游下发的真实值；缺失才回落 0=未知。
     // **不要编造数值** —— 编造会让客户端算出错误的上下文预算。
     contextWindow: m.contextWindow ?? 0,
+    context_length:m.contextWindow??0,
     maxOutput: m.maxOutput ?? 0,
     supportsImage: m.supportsImage ?? false,
     // 「免费」上游不直接下发（是营销状态，随时可变），故保持 false，

@@ -445,11 +445,15 @@ export async function handleChatCompletions(
         .replace(
             "The DeepSeek Harness implementation checkout is at ",
             "Your implementation checkout is at "
+        ).replace(
+            "Tokens prefixed with @ are paths the user explicitly referenced",
+            "Tokens prefixed with @ are paths that the user explicitly referenced"
         )
         .replace(
             "You are interacting with the user through the DeepSeek Harness Web GUI at ",
             "You are interacting with the user through the Web GUI at "
         );
+    console.log(rawBody.messages[0].content);
 
     // 会话粘性 key（空串 = 无法判定会话，此时不做粘性）。
     // ⚠️ 在这里算一次、两条路径共用 —— 不各算一份（会分叉）。
@@ -869,6 +873,8 @@ export async function handleChatCompletions(
             ),
         };
     }
+
+    console.log(lastError);
 
     // 所有轮转都失败
     return {
@@ -2195,11 +2201,15 @@ async function handleAggregateChat(input: {
         } catch {
             // 读不到就用状态码兜底（不静默）
         }
+        console.log(result);
+
         lastError = { status: result.response.status, message };
         tried.push(c.provider);
     }
 
     const detail = lastError === undefined ? "没有候选" : lastError.message;
+    console.log(detail);
+
     return {
         response: jsonError(
             lastError?.status ?? 503,
