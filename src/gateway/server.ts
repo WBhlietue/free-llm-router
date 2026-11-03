@@ -450,9 +450,13 @@ export async function handleChatCompletions(
             "Tokens prefixed with @ are paths that the user explicitly referenced"
         )
         .replace(
-            "You are interacting with the user through the DeepSeek Harness Web GUI at ",
-            "You are interacting with the user through the Web GUI at "
-        );
+            "You are interacting with the user through the DeepSeek Harness Web GUI ",
+            "You are interacting with the user through the Web GUI "
+        )
+        .replace(
+            "The runtime context names the DeepSeek Harness implementation checkout",
+            "The runtime context names the checkout"
+        )
     console.log(rawBody.messages[0].content);
 
     // 会话粘性 key（空串 = 无法判定会话，此时不做粘性）。
